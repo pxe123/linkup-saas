@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Minha Página - LinkUp</title>
-  <script src="https://cdn.tailwindcss.com"></script> 
+  <script src="https://cdn.tailwindcss.com"></script>    
 </head>
 <body class="bg-gray-100 p-4">
 
@@ -17,6 +17,15 @@
     <input id="linkTitle" placeholder="Título do link" class="border w-full p-2 mb-1"/>
     <input id="linkUrl" placeholder="URL do link" class="border w-full p-2 mb-2"/>
 
+    <!-- WhatsApp -->
+    <input id="whatsapp" placeholder="WhatsApp (ex: 5511987654321)" class="border w-full p-2 mb-2"/>
+
+    <!-- Instagram -->
+    <input id="instagram" placeholder="Instagram (ex: @seuusuario)" class="border w-full p-2 mb-2"/>
+
+    <!-- Endereço do Google Maps -->
+    <input id="mapAddress" placeholder="Endereço ou URL do Google Maps" class="border w-full p-2 mb-2"/>
+
     <!-- Botão para salvar -->
     <button onclick="saveLink()" class="w-full bg-blue-500 text-white py-2 mt-2 rounded hover:bg-blue-600">
       Salvar Link
@@ -25,28 +34,31 @@
     <!-- Lista de links salvos -->
     <ul id="linkList" class="mt-4 list-disc pl-5 text-sm text-gray-700"></ul>
 
+    <!-- Mapa padrão -->
     <iframe 
+      id="mapFrame"
       width="100%" 
       height="250" 
       frameborder="0" 
       scrolling="no" 
       marginheight="0" 
       marginwidth="0"
-      src="https://maps.google.com/maps?q=São Paulo&t=&z=13&ie=UTF8&iwloc=&output=embed">
+      style="display:none;"
+      src="">
     </iframe>
 
-    <!-- Link para a página pública -->
+    <!-- Link público -->
     <div class="mt-6 text-center">
       <p class="text-sm text-gray-500 mb-2">Compartilhe sua página:</p>
-      <a id="publicProfileLink" href="#" class="text-blue-500 break-all">Fazer login</a> 
+      <a id="publicProfileLink" href="#" class="text-blue-500 break-all">Fazer login</a>   
     </div>
   </div>
 
   <!-- Firebase SDK via módulos (ESM) -->
   <script type="module">
-    // Importar Firebase diretamente via CDN ESM (módulo)
+    // Import Firebase
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'; 
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
     import { getFirestore, collection, doc, addDoc, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'; 
 
     // Sua configuração do Firebase (substitua pelas suas credenciais reais!)
@@ -64,54 +76,79 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Função para salvar link no Firebase
     window.saveLink = async () => {
       const pageName = document.getElementById("pageName").value;
       const linkTitle = document.getElementById("linkTitle").value;
       const linkUrl = document.getElementById("linkUrl").value;
 
+      const whatsapp = document.getElementById("whatsapp").value;
+      const instagram = document.getElementById("instagram").value;
+      const mapAddress = document.getElementById("mapAddress").value;
+
       if (!pageName || !linkTitle || !linkUrl) {
-        alert("Preencha todos os campos.");
+        alert("Preencha todos os campos obrigatórios.");
         return;
       }
 
       const user = auth.currentUser;
       if (!user) {
-        alert("Você precisa estar logado para salvar links.");
+        alert("Você precisa estar logado para salvar dados.");
         return;
       }
 
       const userId = user.uid;
 
-      await addDoc(collection(db, "users", userId, "links"), {
+      // Estrutura de dados a ser salva
+      const dataToSave = {
         pageName,
         title: linkTitle,
         url: linkUrl,
+        whatsapp,
+        instagram,
+        mapAddress,
         createdAt: Date.now()
-      });
+      };
 
-      alert("Link salvo com sucesso!");
+      await addDoc(collection(db, "users", userId, "links"), dataToSave);
+      alert("Dados salvos com sucesso!");
       loadLinks();
     };
 
-    // Função para carregar links salvos
+    // Função para carregar links
     const loadLinks = async () => {
       const user = auth.currentUser;
       if (!user) return;
 
       const userId = user.uid;
       const linkList = document.getElementById("linkList");
+      const mapFrame = document.getElementById("mapAddress");
       linkList.innerHTML = "";
 
-      const snapshot = await getDocs(
-        collection(db, "users", userId, "links")
-      );
+      const snapshot = await getDocs(collection(db, "users", userId, "links"));
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const li = document.createElement("li");
-        li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+
+        if (data.title && data.url) {
+          li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+        } else if (data.instagram) {
+          li.innerHTML = `<a href="https://www.instagram.com/${data.instagram.replace('@',  '')}" target="_blank" class="text-pink-500">Instagram: ${data.instagram}</a>`;
+        } else if (data.whatsapp) {
+          li.innerHTML = `<a href="https://wa.me/${data.whatsapp}"  target="_blank" class="text-green-500">WhatsApp</a>`;
+        }
+
         linkList.appendChild(li);
+
+        // Atualiza mapa dinamicamente
+        if (data.mapAddress) {
+          mapFrame.style.display = "block";
+          if (data.mapAddress.includes("google.com/maps")) {
+            mapFrame.src = data.mapAddress;
+          } else {
+            mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(data.mapAddress)}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+          }
+        }
       });
     };
 
