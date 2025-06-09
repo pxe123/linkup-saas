@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>LinkUp</title>
+  <script src="https://cdn.tailwindcss.com"></script> 
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="w-full max-w-md bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4">Bem-vindo ao LinkUp</h1>
+    <p class="mb-4">Conecte todos seus links em uma única página.</p>
+
+    <input id="email" type="email" placeholder="Seu email" class="w-full border p-2 mb-2"/>
+    <input id="password" type="password" placeholder="Sua senha" class="w-full border p-2 mb-2"/>
+
+    <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded">Entrar</button>
+    <button onclick="signup()" class="w-full bg-green-500 text-white py-2 mt-2 rounded">Registrar</button>
+  </div>
+
+  <script type="module" src="./firebase.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
