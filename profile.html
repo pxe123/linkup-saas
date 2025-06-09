@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Perfil do Usuário - LinkUp</title>
+  <title>Página Pública - LinkUp</title>
   <script src="https://cdn.tailwindcss.com"></script> 
 </head>
 <body class="bg-gray-100 p-4">
@@ -14,7 +14,7 @@
     <!-- Lista de Links Salvos -->
     <ul id="publicLinkList" class="mt-4 list-disc pl-5 text-sm text-gray-700"></ul>
 
-    <!-- Mapa -->
+    <!-- Mapa (dinâmico) -->
     <iframe 
       id="mapFrame"
       width="100%" 
@@ -49,7 +49,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Carregar perfil dinamicamente com base no ID na URL
+    // Carregar ID do usuário da URL
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('id');
 
@@ -91,7 +91,7 @@
 
         linkList.appendChild(li);
 
-        // Atualiza o mapa se tiver endereço salvo
+        // Atualiza o mapa se houver endereço salvo
         const mapFrame = document.getElementById("mapFrame");
         if (data.mapAddress) {
           mapFrame.style.display = "block";
@@ -106,7 +106,7 @@
 
       // Define o nome da página como o primeiro título salvo
       const firstData = snapshot.docs[0].data();
-      document.getElementById("pageTitle").innerText = firstData.pageName || "Página do usuário";
+      document.getElementById("pageTitle").innerText = firstData.pageName || "Página do Usuário";
     };
 
     loadPublicLinks();
