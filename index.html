@@ -2,23 +2,74 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>LinkUp</title>
+  <title>LinkUp - Faça login</title>
   <script src="https://cdn.tailwindcss.com"></script> 
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
   <div class="w-full max-w-md bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">Bem-vindo ao LinkUp</h1>
-    <p class="mb-4">Conecte todos seus links em uma única página.</p>
+    <h1 class="text-2xl font-bold mb-4">Entrar no LinkUp</h1>
 
     <input id="email" type="email" placeholder="Seu email" class="w-full border p-2 mb-2"/>
     <input id="password" type="password" placeholder="Sua senha" class="w-full border p-2 mb-2"/>
 
-    <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded">Entrar</button>
-    <button onclick="signup()" class="w-full bg-green-500 text-white py-2 mt-2 rounded">Registrar</button>
+    <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Entrar</button>
+    <button onclick="signup()" class="w-full bg-green-500 text-white py-2 mt-2 rounded hover:bg-green-600">Registrar</button>
   </div>
 
-  <script type="module" src="./firebase.js"></script>
-  <script src="./app.js"></script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'; 
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
+
+    // Sua configuração do Firebase (substitua pelas suas credenciais reais!)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "linkup-saas.firebaseapp.com",
+      projectId: "linkup-saas",
+      storageBucket: "linkup-saas.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.login = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          alert("Logado com sucesso!");
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Erro ao entrar: " + error.message);
+        });
+    };
+
+    window.signup = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          alert("Conta criada com sucesso!");
+          window.location.href = "dashboard.html";
+        })
+        .catch((error) => {
+          alert("Erro ao registrar: " + error.message);
+        });
+    };
+
+    // Opcional: redirecionar usuários logados diretamente para dashboard
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "dashboard.html";
+      }
+    });
+  </script>
 </body>
 </html>
