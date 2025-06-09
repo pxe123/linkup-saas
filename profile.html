@@ -2,15 +2,19 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Perfil - LinkUp</title>
+  <title>Perfil do Usuário - LinkUp</title>
   <script src="https://cdn.tailwindcss.com"></script> 
 </head>
 <body class="bg-gray-100 p-4">
 
   <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <!-- Nome da Página -->
     <h1 id="pageTitle" class="text-2xl font-bold mb-4">Carregando...</h1>
+
+    <!-- Lista de Links Salvos -->
     <ul id="publicLinkList" class="mt-4 list-disc pl-5 text-sm text-gray-700"></ul>
 
+    <!-- Mapa -->
     <iframe 
       id="mapFrame"
       width="100%" 
@@ -24,13 +28,13 @@
     </iframe>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'; 
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
-    import { getFirestore, collection, doc, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'; 
+    import { getFirestore, collection, doc, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'; 
 
-    // Sua configuração do Firebase
+    // Sua configuração do Firebase (substitua pelas suas credenciais reais!)
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "linkup-saas.firebaseapp.com",
@@ -52,6 +56,7 @@
     if (!userId) {
       document.getElementById("pageTitle").innerText = "Página não encontrada";
       document.getElementById("publicLinkList").innerHTML = "<li>Usuário não encontrado.</li>";
+      document.getElementById("mapFrame").style.display = "none";
       exit;
     }
 
@@ -59,8 +64,7 @@
       const linkList = document.getElementById("publicLinkList");
       linkList.innerHTML = "";
 
-      const q = query(collection(db, "users", userId, "links"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(collection(db, "users", userId, "links"));
 
       if (snapshot.empty) {
         linkList.innerHTML = "<li>Nenhum link encontrado.</li>";
@@ -69,12 +73,40 @@
 
       snapshot.forEach(doc => {
         const data = doc.data();
+
         const li = document.createElement("li");
-        li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+
+        // Se for um link normal
+        if (data.title && data.url) {
+          li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+        }
+        // Se for Instagram
+        else if (data.instagram) {
+          li.innerHTML = `<a href="https://www.instagram.com/${data.instagram.replace('@',  '')}" target="_blank" class="text-pink-500">${data.instagram}</a>`;
+        }
+        // Se for WhatsApp
+        else if (data.whatsapp) {
+          li.innerHTML = `<a href="https://wa.me/${data.whatsapp}"  target="_blank" class="text-green-500">WhatsApp</a>`;
+        }
+
         linkList.appendChild(li);
+
+        // Atualiza o mapa se tiver endereço salvo
+        const mapFrame = document.getElementById("mapFrame");
+        if (data.mapAddress) {
+          mapFrame.style.display = "block";
+
+          if (data.mapAddress.includes("google.com/maps")) {
+            mapFrame.src = data.mapAddress;
+          } else {
+            mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(data.mapAddress)}&t=&z=13&ie=UTF8&iwloc=&output=embed`;
+          }
+        }
       });
 
-      document.getElementById("pageTitle").innerText = `${snapshot.docs[0].data().pageName}`;
+      // Define o nome da página como o primeiro título salvo
+      const firstData = snapshot.docs[0].data();
+      document.getElementById("pageTitle").innerText = firstData.pageName || "Página do usuário";
     };
 
     loadPublicLinks();
