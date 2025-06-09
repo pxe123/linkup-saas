@@ -3,12 +3,12 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } f
 
 // Substitua pelas suas credenciais do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXX",
+  apiKey: "AIzaSyAO65rYmLXDGj38pIIS3btlX6rFv9-CvY0",
   authDomain: "linkup-saas.firebaseapp.com",
   projectId: "linkup-saas",
-  storageBucket: "linkup-saas.appspot.com",
-  messagingSenderId: "XXXXXXXXXXX",
-  appId: "XXXXXXXXXXXXXXXXX"
+  storageBucket: "linkup-saas.firebasestorage.app",
+  messagingSenderId: "145227241799",
+  appId: "1:145227241799:web:4bb7dbc209f14c44c89462"
 };
 
 // Inicializar Firebase
