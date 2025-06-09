@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Perfil - LinkUp</title>
+  <script src="https://cdn.tailwindcss.com"></script> 
+</head>
+<body class="bg-gray-100 p-4">
+
+  <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h1 id="pageTitle" class="text-2xl font-bold mb-4">Carregando...</h1>
+    <ul id="publicLinkList" class="mt-4 list-disc pl-5 text-sm text-gray-700"></ul>
+
+    <iframe 
+      id="mapFrame"
+      width="100%" 
+      height="250" 
+      frameborder="0" 
+      scrolling="no" 
+      marginheight="0" 
+      marginwidth="0"
+      style="display:none;"
+      src="">
+    </iframe>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'; 
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
+    import { getFirestore, collection, doc, getDocs, orderBy, query } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'; 
+
+    // Sua configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "linkup-saas.firebaseapp.com",
+      projectId: "linkup-saas",
+      storageBucket: "linkup-saas.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Carregar perfil dinamicamente com base no ID na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('id');
+
+    if (!userId) {
+      document.getElementById("pageTitle").innerText = "Página não encontrada";
+      document.getElementById("publicLinkList").innerHTML = "<li>Usuário não encontrado.</li>";
+      exit;
+    }
+
+    const loadPublicLinks = async () => {
+      const linkList = document.getElementById("publicLinkList");
+      linkList.innerHTML = "";
+
+      const q = query(collection(db, "users", userId, "links"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        linkList.innerHTML = "<li>Nenhum link encontrado.</li>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+        linkList.appendChild(li);
+      });
+
+      document.getElementById("pageTitle").innerText = `${snapshot.docs[0].data().pageName}`;
+    };
+
+    loadPublicLinks();
+  </script>
+</body>
+</html>

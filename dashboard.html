@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Sua Página - LinkUp</title>
+  <title>Minha Página - LinkUp</title>
   <script src="https://cdn.tailwindcss.com"></script> 
 </head>
 <body class="bg-gray-100 p-4">
@@ -10,7 +10,20 @@
   <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
     <h1 class="text-2xl font-bold mb-4">Minha Página no LinkUp</h1>
 
-    <input placeholder="Nome da sua página" class="border w-full p-2 mb-2"/>
+    <!-- Campo para nome da página -->
+    <input id="pageName" placeholder="Nome da sua página" class="border w-full p-2 mb-2"/>
+
+    <!-- Campo para link -->
+    <input id="linkTitle" placeholder="Título do link" class="border w-full p-2 mb-1"/>
+    <input id="linkUrl" placeholder="URL do link" class="border w-full p-2 mb-2"/>
+
+    <!-- Botão para salvar -->
+    <button onclick="saveLink()" class="w-full bg-blue-500 text-white py-2 mt-2 rounded hover:bg-blue-600">
+      Salvar Link
+    </button>
+
+    <!-- Lista de links salvos -->
+    <ul id="linkList" class="mt-4 list-disc pl-5 text-sm text-gray-700"></ul>
 
     <iframe 
       width="100%" 
@@ -22,8 +35,98 @@
       src="https://maps.google.com/maps?q=São Paulo&t=&z=13&ie=UTF8&iwloc=&output=embed">
     </iframe>
 
-    <p class="mt-4 text-sm text-gray-500">Adicione links, redes sociais e mais!</p>
+    <!-- Link para a página pública -->
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-500 mb-2">Compartilhe sua página:</p>
+      <a id="publicProfileLink" href="#" class="text-blue-500 break-all">Fazer login</a> 
+    </div>
   </div>
 
+  <!-- Firebase SDK via módulos (ESM) -->
+  <script type="module">
+    // Importar Firebase diretamente via CDN ESM (módulo)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'; 
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js'; 
+    import { getFirestore, collection, doc, addDoc, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'; 
+
+    // Sua configuração do Firebase (substitua pelas suas credenciais reais!)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "linkup-saas.firebaseapp.com",
+      projectId: "linkup-saas",
+      storageBucket: "linkup-saas.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Função para salvar link no Firebase
+    window.saveLink = async () => {
+      const pageName = document.getElementById("pageName").value;
+      const linkTitle = document.getElementById("linkTitle").value;
+      const linkUrl = document.getElementById("linkUrl").value;
+
+      if (!pageName || !linkTitle || !linkUrl) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Você precisa estar logado para salvar links.");
+        return;
+      }
+
+      const userId = user.uid;
+
+      await addDoc(collection(db, "users", userId, "links"), {
+        pageName,
+        title: linkTitle,
+        url: linkUrl,
+        createdAt: Date.now()
+      });
+
+      alert("Link salvo com sucesso!");
+      loadLinks();
+    };
+
+    // Função para carregar links salvos
+    const loadLinks = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userId = user.uid;
+      const linkList = document.getElementById("linkList");
+      linkList.innerHTML = "";
+
+      const snapshot = await getDocs(
+        collection(db, "users", userId, "links")
+      );
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.innerHTML = `<a href="${data.url}" target="_blank" class="text-blue-500">${data.title}</a>`;
+        linkList.appendChild(li);
+      });
+    };
+
+    // Carregar links ao entrar na página
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userId = user.uid;
+        const profileLink = `https://linkup.vercel.app/profile.html?id=${userId}`;
+        document.getElementById("publicProfileLink").href = profileLink;
+        document.getElementById("publicProfileLink").innerText = profileLink;
+        await loadLinks(); // Carrega os links apenas se estiver logado
+      } else {
+        document.getElementById("publicProfileLink").innerText = "Faça login para ver seu perfil";
+      }
+    });
+  </script>
 </body>
 </html>
